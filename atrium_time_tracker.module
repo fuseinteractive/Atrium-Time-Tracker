@@ -1,0 +1,37 @@
+<?php
+
+/**
+ * @file
+ * Enables time sheet entry for users.
+ */
+
+function atrium_time_tracker_init() {
+  drupal_add_css(drupal_get_path('module', 'atrium_time_tracker') .'/css/atrium_time_tracker.css');
+}
+
+function atrium_time_tracker_menu_alter (&$items) {
+  $items['time_sheet'] = array(
+    'title' => 'Time Sheet',
+    'description' => 'My Time Sheet',
+    'page callback' => 'time_sheet_user_page',
+    'page arguments' => array(1),
+    'access arguments' => array('view time sheet entries'),
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'features',
+    'options' => array(
+      'attributes' => array(
+        'class' => 'time_sheet_link'
+      ),
+    ),
+  );
+}
+
+/**
+ * Helper function to dynamically enter the current user
+ * into the path of the time sheet link in the features menu
+ */
+function currentuser_to_arg($arg) {
+  global $user;
+  return $user->uid;
+}
+

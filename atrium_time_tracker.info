@@ -1,0 +1,7 @@
+core = "6.x"
+dependencies[] = "time_tracker"
+description = "Atrium specific Time Tacker config and Dev"
+name = "Atrium Time Tracker"
+package = "Features"
+project = "atrium_time_tracker"
+version = "6.x-1.0-dev"
