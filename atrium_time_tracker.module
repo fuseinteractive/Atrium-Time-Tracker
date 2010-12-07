@@ -35,3 +35,64 @@ function currentuser_to_arg($arg) {
   return $user->uid;
 }
 
+/***************************************************************************
+ * THEME FUNCTION OVERRIDES
+ ***************************************************************************/
+
+/**
+ * Implements hook_theme_registry_alter()
+ */
+function atrium_time_tracker_theme_registry_alter(&$theme_registry) {
+  if (!empty($theme_registry['time_estimate_summary'])) {
+    $theme_registry['time_estimate_summary']['function'] = 'atrium_time_estimate_summary';
+  }
+}
+
+/**
+ * Theme function override for the time estimate summary
+ * 
+ * Overrides theme_time_estimate_summary in module time_estimate
+ * 
+ * @param $time_tracker_time
+ *    Time logged so far in hours
+ * 
+ * @param $time_estimate_time
+ *    Time estimate in hours
+ */
+function atrium_time_estimate_summary($time_tracker_time, $time_estimate_time) {
+  if (user_access('view time estimate entries')) {
+    $rows = array();
+    
+    if ($time_estimate_time > $time_tracker_time) {
+      $class = 'time_under';
+    }
+    else {
+      $class = 'time_over';
+    }
+    
+    $rows[] = array(
+      array(
+        'data' => '<span class="time_tracker_icon"> </span>',
+        'class' => 'icon',
+      ),
+      array(
+        'data' => '<span class="time_estimate_label">' . t('Estimated Time:') . '</span><br/>' .
+                  '<span class="time_estimate_time">' .
+                  format_hours_to_hours_and_minutes($time_estimate_time) . '</span>',
+        'class' => 'time_estimate',
+      ),
+      array(
+        'data' => '<span class="time_tracker_label">' . t('Time Logged:') . '</span><br/>' .
+                  '<span class="time_tracker_time">' .
+                  format_hours_to_hours_and_minutes($time_tracker_time) . 
+                  '</span> <span class="time_tracker_remaining ' . $class . '">(' .
+                  format_hours_to_hours_and_minutes($time_estimate_time - $time_tracker_time, TRUE) . ' remaining)</span>',
+        'class' => 'time_tracker',
+      ),
+    );
+    return theme('table', $headers, $rows, array('class' => 'time_estimate_summary'));
+  }
+}
+
+
+

@@ -5,3 +5,69 @@
   height:40px;
   width:40px;
 }
+
+table.time_estimate_summary {
+  background-color: #f8f8f8;
+}
+
+table.time_estimate_summary td {
+  border-bottom: 1px solid #ccc;
+}
+
+table.time_estimate_summary span.time_tracker_icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  background: url(images/time_tracker_stopwatch_icon_grey.png) no-repeat 0 0;
+}
+
+table.time_estimate_summary td.icon {
+  width: 32px;
+  padding: 10px;
+}
+
+table.time_estimate_summary .time_tracker,
+table.time_estimate_summary .time_estimate {
+  border-left: 1px #cccccc dotted;
+  padding: 5px 10px;
+}
+
+table.time_estimate_summary .time_tracker_label,
+table.time_estimate_summary .time_estimate_label {
+  color: #999;
+  font-size: 11px;
+  line-height: 11px;
+}
+
+table.time_estimate_summary .time_tracker_time,
+table.time_estimate_summary .time_estimate_time{
+  font-size: 16px;
+}
+
+table.time_estimate_summary .time_tracker_remaining {
+  font-size: 12px;
+}
+
+table.time_estimate_summary .time_tracker .time_over {
+  color: #b63535;
+  font-size: 12px;
+}
+
+table.time_estimate_summary .time_tracker .time_under {
+  color: #4fa218;
+  font-size: 12px;
+}
+
+table.time_estimate_summary .time_estimate_time {
+  color: #424242;
+}
+
+table.time_estimate_summary .time_tracker_time {
+  color: #424242;
+  font-weight: bold;
+}
+
+table.time_estimate_summary .time_tracker_remaining {
+  color: #999;
+  font-style: italic;
+}
