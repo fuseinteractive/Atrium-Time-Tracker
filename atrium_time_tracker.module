@@ -60,38 +60,40 @@ function atrium_time_tracker_theme_registry_alter(&$theme_registry) {
  *    Time estimate in hours
  */
 function atrium_time_estimate_summary($time_tracker_time, $time_estimate_time) {
-  if (user_access('view time estimate entries')) {
-    $rows = array();
-    
-    if ($time_estimate_time > $time_tracker_time) {
-      $class = 'time_under';
-    }
-    else {
-      $class = 'time_over';
-    }
-    
-    $rows[] = array(
-      array(
-        'data' => '<span class="time_tracker_icon"> </span>',
-        'class' => 'icon',
-      ),
-      array(
-        'data' => '<span class="time_estimate_label">' . t('Estimated Time:') . '</span><br/>' .
-                  '<span class="time_estimate_time">' .
-                  format_hours_to_hours_and_minutes($time_estimate_time) . '</span>',
-        'class' => 'time_estimate',
-      ),
-      array(
-        'data' => '<span class="time_tracker_label">' . t('Time Logged:') . '</span><br/>' .
-                  '<span class="time_tracker_time">' .
-                  format_hours_to_hours_and_minutes($time_tracker_time) . 
-                  '</span> <span class="time_tracker_remaining ' . $class . '">(' .
-                  format_hours_to_hours_and_minutes($time_estimate_time - $time_tracker_time, TRUE) . ' remaining)</span>',
-        'class' => 'time_tracker',
-      ),
-    );
-    return theme('table', $headers, $rows, array('class' => 'time_estimate_summary'));
+
+  $rows = array();
+  
+  if ($time_estimate_time > $time_tracker_time) {
+    $class = 'time_under';
+    $remaining = format_hours_to_hours_and_minutes($time_estimate_time - $time_tracker_time, TRUE) . t(' remaining');
   }
+  else {
+    $class = 'time_over';
+    $remaining = t('over by: ') . format_hours_to_hours_and_minutes(abs($time_estimate_time - $time_tracker_time), TRUE);
+  }
+  
+  $rows[] = array(
+    array(
+      'data' => '<span class="time_tracker_icon"> </span>',
+      'class' => 'icon',
+    ),
+    array(
+      'data' => '<span class="time_estimate_label">' . t('Estimated Time:') . '</span><br/>' .
+                '<span class="time_estimate_time">' .
+                format_hours_to_hours_and_minutes($time_estimate_time) . '</span>',
+      'class' => 'time_estimate',
+    ),
+    array(
+      'data' => '<span class="time_tracker_label">' . t('Time Logged:') . '</span><br/>' .
+                '<span class="time_tracker_time">' .
+                format_hours_to_hours_and_minutes($time_tracker_time) . 
+                '</span> <span class="time_tracker_remaining ' . $class . 
+                '">(' . $remaining . ')</span>',
+      'class' => 'time_tracker',
+    ),
+  );
+  return theme('table', $headers, $rows, array('class' => 'time_estimate_summary'));
+
 }
 
 
