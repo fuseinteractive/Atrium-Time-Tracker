@@ -13,7 +13,7 @@ function atrium_time_tracker_menu_alter (&$items) {
   $items['time_sheet'] = array(
     'title' => 'Time Sheet',
     'description' => 'My Time Sheet',
-    'page callback' => 'time_sheet_user_page',
+    'page callback' => 'time_sheet_page',
     'page arguments' => array(1),
     'access arguments' => array('view time sheet entries'),
     'type' => MENU_NORMAL_ITEM,
@@ -46,6 +46,9 @@ function atrium_time_tracker_theme_registry_alter(&$theme_registry) {
   if (!empty($theme_registry['time_estimate_summary'])) {
     $theme_registry['time_estimate_summary']['function'] = 'atrium_time_estimate_summary';
   }
+  if (!empty($theme_registry['time_sheet_user_page'])) {
+    $theme_registry['time_sheet_user_page']['function'] = 'atrium_time_sheet_user_page';
+  }
 }
 
 /**
@@ -74,7 +77,7 @@ function atrium_time_estimate_summary($time_tracker_time, $time_estimate_time) {
   
   $rows[] = array(
     array(
-      'data' => '<span class="time_tracker_icon"> </span>',
+      'data' => '<span class="time_tracker_icon">' . theme_image(drupal_get_path('module', 'time_tracker') . '/css/images/time_tracker_stopwatch_icon_grey.png', 'timer icon', 'Time Tracker Timer Icon') . '</span>',
       'class' => 'icon',
     ),
     array(
@@ -96,5 +99,135 @@ function atrium_time_estimate_summary($time_tracker_time, $time_estimate_time) {
 
 }
 
+/**
+ * Theme function override for the time_sheet user page.
+ * 
+ * @desc This callback displays a users time_sheet defaulting to the
+ * current week. Uses the fun crayon module included with atrium
+ * to show the project name
+ * 
+ * @param $user
+ *    Can be a $user object, a $uid or left out entirely to load the current user
+ * 
+ * @return
+ *    A themed table of time entry data
+ */
+function atrium_time_sheet_user_page($user = NULL) {
+  //Validates the user being passed in the path is a number (uid)
+  if (is_numeric($user)) {
+    $user = user_load($user); 
+  } // Load current user if it's null
+  elseif ($user == NULL) {
+    global $user;
+  }
+  
+  // Get a start timestamp from the url parameters or set a default.
+  if (!isset($_GET['start'])) {
+    $start = time();
+  } else {
+    $start = $_GET['start'];
+  }
+
+  // Create a lookup table of time stamps for the week
+  $date_lookup = array('monday' => strtotime(date("Y\WW1", $start)),
+                'tuesday' => strtotime(date("Y\WW2", $start)),
+                'wednesday' => strtotime(date("Y\WW3", $start)),
+                'thursday' => strtotime(date("Y\WW4", $start)),
+                'friday' => strtotime(date("Y\WW5", $start)),
+                'saturday' => strtotime(date("Y\WW6", $start)),
+                'sunday' => strtotime(date("Y\WW7", $start)));
+  
+  // Get the configured days of the week
+  $days_of_week = variable_get('time_sheet_days_of_week', array('monday', 'tuesday', 'wednesday', 'thursday', 'friday'));
+  // Get the configured first day of the week
+  $first_day = variable_get('time_sheet_week_start', 'monday');
+  // A variable to store days at the beginning of the week
+  // to be moved to the end of the week
+  $days_at_end = array();
+  
+  // remove items at the beginning of the week until we get to the configured $first_day
+  while (current($days_of_week) != $first_day && current($days_of_week)) {
+    $days_at_end[] = array_shift($days_of_week);
+  }
+  
+  // Put the days from the beginning at the end
+  $days_of_week = array_merge($days_of_week, $days_at_end);
+  
+  // create a new array of the ordered days of the week with timestamps
+  $days = array();
+  foreach ($days_of_week as $day) {
+    $days[$day] = $date_lookup[$day];
+  }
+
+  // Determine the neighbouring weeks timestamps.
+  $next_week = strtotime('+ 1 week', $days[$first_day]);
+  $prev_week = strtotime('- 1 week', $days[$first_day]);
+
+  // Output the week switcher.
+  $output .= '<span class="time-sheet-header">';
+  $output .= l(t('&laquo;'), $_GET['q'], array('query' => array('start' => $prev_week), 'html' => 'TRUE'));
+  $output .= ' ' . date("l, M jS", reset($days)) . ' - ' . date("l, M jS", end($days)) . ' ';
+  $output .= l(t('&raquo;'), $_GET['q'], array('query' => array('start' => $next_week), 'html' => 'TRUE'));
+  $output .= '</span>';
+
+  // Loop through days of the week pulling time entries and generating a table.
+  foreach ($days as $day => $stamp) {
+    // The header displaying the date
+    $header = array(array('data' => date("l, M jS Y", $stamp), 'colspan' => 2));
+    // Rows Variable for later theme_table-ing
+    $rows = array();
+    // Get the all the time tracker entries for the date we're on
+    $sql = "SELECT * FROM {time_tracker_entry} 
+            WHERE uid = %d 
+            AND timestamp BETWEEN %d AND %d  
+            ORDER BY teid";
+    $time_entry_results = db_query($sql, $user->uid, $stamp, (strtotime("+1 day", $stamp)-1));
+    $total_duration = 0;
+    // Loop throug each
+    while ($time_entry_result = db_fetch_object($time_entry_results)) {
+      // Container for row data to display a time entry
+      $row = array();
+      // Load the time entry node object
+      $time_entry = node_load(array('nid' => $time_entry_result->nid));
+      // Load the casetracker project node object
+      $project = node_load(array('nid' => $time_entry_result->pid));
+      // The little colorful project icon next to time entries in the time_sheet
+      // And the time_entry item name. Both linked
+      $row[] = theme('crayon_swatch', $project->nid, crayon_generate_acronym($project->title), $project->title, "node/{$project->nid}") . l($time_entry->title, 'node/' . $time_entry->nid, array('attributes' => array('class' => 'time-sheet-case')));
+      // The amount of time logged for this item
+      $row[] = array('data' => format_hours_to_hours_and_minutes($time_entry_result->duration), 'align' => 'right');
+      // On going add-up of the total duration of time logged this week
+      $total_duration = $total_duration + $time_entry_result->duration;
+      // Add the row to the rows
+      $rows[] = array('data' => $row);
+    }
+    
+    // As long as this day has a time entry, the row array will
+    // be populated with more than 1 item
+    if (count($row) > 1) {
+      $row = array();
+      $row[] = '<strong>' . t("Total hours for") . " " . date("l", $stamp) . '</strong>';
+      $row[] = array('data' => '<strong>' . format_hours_to_hours_and_minutes($total_duration) . '</strong>', 'align' => 'right');
+      $rows[] = array('data' => $row);
+    } else {
+      $row = array();
+      $row[] = array('data' => t("No time entered."), 'colspan' => 2);
+      $rows[] = array('data' => $row);
+    }
+    
+    $row = array();
+    // Put the form to add a case for this day at the bottom of the day's table
+    if (module_exists('casetracker') && user_access('enter time on time sheet for casetracker cases')) {
+      $row[] = array('data' => drupal_get_form('time_sheet_case_list_form', $user, $day, $stamp), 'colspan' => 2);
+      $rows[] = array('data' => $row, 'id' => 'case-details-' . $day);
+    }
+    
+    
+    // Add this day to the table
+    $output .= theme('table', $header, $rows, array('id' => 'time-sheet-' . $day));
+  }
+
+  return $output;
+}
 
 
