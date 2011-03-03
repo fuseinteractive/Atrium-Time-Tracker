@@ -224,7 +224,7 @@ function atrium_time_sheet_user_page($user = NULL) {
       // Load the time entry node object
       $time_entry = node_load(array('nid' => $time_entry_result->nid));
       // Load the casetracker project node object
-      $project = node_load(array('nid' => $time_entry_result->pid));
+      $project = node_load(array('nid' => $time_entry->casetracker->pid));
       // The little colorful project icon next to time entries in the time_sheet
       // And the time_entry item name. Both linked
       $row[] = theme('crayon_swatch', $project->nid, crayon_generate_acronym($project->title), $project->title, "node/{$project->nid}") . l($time_entry->title, 'node/' . $time_entry->nid, array('attributes' => array('class' => 'time-sheet-case')));
