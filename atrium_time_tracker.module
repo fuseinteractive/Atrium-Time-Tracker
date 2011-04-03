@@ -10,12 +10,13 @@ function atrium_time_tracker_init() {
 }
 
 function atrium_time_tracker_menu_alter (&$items) {
-  $items['time_sheet'] = array(
+  $items['time_sheet/%currentuser'] = array(
     'title' => 'Time Sheet',
     'description' => 'My Time Sheet',
     'page callback' => 'time_sheet_page',
     'page arguments' => array(1),
-    'access arguments' => array('view time sheet entries'),
+    'access callback' => 'time_sheet_view_access',
+    'access arguments' => array(1),
     'type' => MENU_NORMAL_ITEM,
     'menu_name' => 'features',
     'options' => array(
