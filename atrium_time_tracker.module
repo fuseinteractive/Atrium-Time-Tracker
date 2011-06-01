@@ -105,11 +105,11 @@ function atrium_time_estimate_summary($time_tracker_time, $time_estimate_time) {
   
   if ($time_estimate_time > $time_tracker_time) {
     $class = 'time_under';
-    $remaining = format_hours_to_hours_and_minutes($time_estimate_time - $time_tracker_time, TRUE) . t(' remaining');
+    $remaining = format_hours_to_hours_and_minutes($time_estimate_time - $time_tracker_time, FALSE, TRUE) . t(' remaining');
   }
   else {
     $class = 'time_over';
-    $remaining = t('over by: ') . format_hours_to_hours_and_minutes(abs($time_estimate_time - $time_tracker_time), TRUE);
+    $remaining = t('over by: ') . format_hours_to_hours_and_minutes(abs($time_estimate_time - $time_tracker_time), FALSE, TRUE);
   }
   
   $rows[] = array(
@@ -232,9 +232,9 @@ function atrium_time_sheet_user_page($user = NULL) {
       // And the time_entry item name. Both linked
       $row[] = theme('crayon_swatch', $project->nid, crayon_generate_acronym($project->title), $project->title, "node/{$project->nid}") . l($time_entry->title, 'node/' . $time_entry->nid, array('attributes' => array('class' => 'time-sheet-case')));
       // The amount of time logged for this item
-      $row[] = array('data' => format_hours_to_hours_and_minutes($time_entry_result->duration), 'align' => 'right');
+      $row[] = array('data' => format_hours_to_hours_and_minutes($time_entry_result->duration - $time_entry_result->deductions), 'align' => 'right');
       // On going add-up of the total duration of time logged this week
-      $total_duration = $total_duration + $time_entry_result->duration;
+      $total_duration = $total_duration + ($time_entry_result->duration - $time_entry_result->deductions);
       // Add the row to the rows
       $rows[] = array('data' => $row);
     }
