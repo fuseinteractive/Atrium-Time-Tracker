@@ -1,11 +1,3 @@
-#features-menu li a.time_sheet_link span.icon {
-  background:url(images/time-tracker-icon-large.png) no-repeat 0 0;
-  display:block;
-  float:left;
-  height:40px;
-  width:40px;
-}
-
 table.time_estimate_summary,
 table.time_tracker_summary td {
   background-color: #f8f8f8;
